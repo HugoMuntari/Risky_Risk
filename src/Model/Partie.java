@@ -543,4 +543,118 @@ public class Partie implements Serializable{
         }
         return null;
     }
+    
+    
+    //Méthode qui tire un joueur aléatoire parmi les joueurs jouant
+    public Joueur pickJoueur() {
+        Joueur joueur;
+        Random random = new Random();
+        int jeSuisUnInt = random.nextInt(joueurs.size());
+        joueur = joueurs.get(jeSuisUnInt);
+        return joueur;
+    }
+
+    //Méthode qui tire une case aléatoire parmi les cases du joueur précedemment tiré
+    public Case pickCase() {
+        Case retour;
+        Joueur joueur = pickJoueur();
+        List<Case> terrain = joueur.getTerrain();
+        Random random = new Random();
+        int moiAussiJeSuisUnInt = random.nextInt(terrain.size());
+        retour = terrain.get(moiAussiJeSuisUnInt);
+        return retour;
+    }
+
+    //Méthode qui tire une case aléatoire parmi les voisins de la case précédemment tirée
+    public Case pickVoisin() {
+        Case picked = pickCase();
+        Set<Case> voisins = picked.getVoisins();
+        Random random = new Random();
+        int ohNonUnTroisiemeInt = random.nextInt(voisins.size());
+        int i = 0;
+        for(Case cas : voisins)
+        {
+            if (i == ohNonUnTroisiemeInt)
+                return cas;
+            i++;
+        }
+        return null;
+    }
+
+    //Evenement qui ajoute une troupe
+    public void eventRenfort() {
+        Case selected = pickCase();
+        int troupes = selected.getNbtroupes();
+        troupes++;
+        selected.setNbtroupes(troupes);
+    }
+
+    //Evenement qui ajoute trois troupes pendant un tour
+    public Case eventMercenaires() {
+        Case selected = pickCase();
+        int troupes = selected.getNbtroupes();
+        troupes+=3;
+        selected.setNbtroupes(troupes);
+        return selected;
+    }
+
+    //Les trois troupes précédemment ajoutées sont retirées au tour suivant
+    //S'il y avait moins de trois troupes sur la case alors le nombre de troupe est mis à 1
+    public void finEventMercenaires() {
+        Case selected = eventMercenaires();
+        int troupes = selected.getNbtroupes();
+        if (troupes<=3) troupes=1;
+        else troupes-=3;
+        selected.setNbtroupes(troupes);
+    }
+
+    //Un joueur ne peux plus attaquer via une des ses cases pendant un tour
+    //PS : J'ai fais ça comme un sac (j'ai mis le nombre de troupes à 1)
+    public Case eventSabotage() {
+        Case selected = pickCase();
+        Case buff = selected;
+        selected.setNbtroupes(1);
+        return buff;
+    }
+
+    //On remet le nombre de troupes de la case à son nombre initial pour qu'elle puisse attaquer ensuite
+    public void finEventSabotage() {
+        Case selected = eventSabotage();
+    }
+
+    //Evenement qui enleve deux troupes
+    public void eventDesertion() {
+        Case selected = pickCase();
+        int troupes = selected.getNbtroupes();
+        troupes-=2;
+        selected.setNbtroupes(troupes);
+    }
+
+    //Evenement qui enleve une troupe et l'ajoute à une case voisine
+    public void eventTrahison() {
+        Case selected = pickCase();
+        int troupes = selected.getNbtroupes();
+        troupes--;
+        selected.setNbtroupes(troupes);
+        Case voisin = pickVoisin();
+        int troupesVoisin = voisin.getNbtroupes();
+        troupes++;
+        voisin.setNbtroupes(troupesVoisin);
+    }
+
+    //Evenement qui supprime toutes les troupes présentes sur une case et la rend neutre
+    public void eventRevolte() {
+        Case selected = pickCase();
+        int troupes = selected.getNbtroupes();
+        troupes = 0;
+        selected.setNbtroupes(troupes);
+        neutres.add(selected);
+    }
+
+    /*
+    Au départ j'avais d'autres idées genre qu'un joueur ne puisse pas mettre de renforts sur une de ses cases
+    pendant un tour ou qu'un joueur puisse enlever une troupe à une case adjacente à une des siennes mais
+    je voyais pas comment faire du coup on a que 6 événements au total.
+    */
+    
 }
